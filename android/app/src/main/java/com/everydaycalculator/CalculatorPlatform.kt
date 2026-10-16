@@ -31,16 +31,16 @@ class CalculatorPlatform(private val context: ReactApplicationContext) : ReactCo
     catch(e:Exception){promise.reject("STORAGE","Unable to save data",e)}
   }
   @ReactMethod fun copy(text:String) { (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Calculation",text)) }
-  @ReactMethod fun keepAwake(enabled:Boolean) { currentActivity?.runOnUiThread { if(enabled) currentActivity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else currentActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) } }
+  @ReactMethod fun keepAwake(enabled:Boolean) { context.currentActivity?.runOnUiThread { if(enabled) context.currentActivity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else context.currentActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) } }
   @ReactMethod fun exportFile(name:String, type:String, text:String, promise:Promise) {
-    val activity=currentActivity ?: run { promise.reject("ACTIVITY","Open the app to export");return }
+    val activity=context.currentActivity ?: run { promise.reject("ACTIVITY","Open the app to export");return }
     if(pending!=null){promise.reject("BUSY","Finish the current file operation first");return}
     pending=promise;exportText=text
     try { activity.startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE);setType(type);putExtra(Intent.EXTRA_TITLE,name) },7101) }
     catch(e:Exception){pending=null;exportText=null;promise.reject("EXPORT","No file picker available",e)}
   }
   @ReactMethod fun importFile(promise:Promise) {
-    val activity=currentActivity ?: run { promise.reject("ACTIVITY","Open the app to restore");return }
+    val activity=context.currentActivity ?: run { promise.reject("ACTIVITY","Open the app to restore");return }
     if(pending!=null){promise.reject("BUSY","Finish the current file operation first");return}
     pending=promise
     try { activity.startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE);type="*/*";putExtra(Intent.EXTRA_MIME_TYPES,arrayOf("application/json","text/plain","application/octet-stream")) },7102) }
