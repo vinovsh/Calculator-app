@@ -435,6 +435,8 @@ function Root() {
                   setReuse('');
                   setSession(s => s + 1);
                   setPage(id);
+                  if (id === 'calculator')
+                    writeJSON('last', id).catch(() => {});
                 }}
                 style={{
                   flex: 1,

@@ -23,6 +23,9 @@ export function Calculator({
 }) {
   const { colors, settings, save, go, toast } = useApp();
   const { height } = useWindowDimensions();
+  const [availableHeight, setAvailableHeight] = useState(
+    Math.max(0, height - 230),
+  );
   const [expression, setExpression] = useState(initial),
     [answer, setAnswer] = useState(''),
     [error, setError] = useState(''),
@@ -115,9 +118,11 @@ export function Calculator({
       toast('Enter a valid expression first');
     }
   };
+  // Measure the body, excluding the header, navigation, safe areas and banner.
+  // Normal-sized phones keep the basic keypad and equals button in view.
   const keyHeight = Math.min(
     scientific ? 54 : 72,
-    Math.max(43, (height - (scientific ? 430 : 370)) / 5),
+    Math.max(43, (availableHeight - (scientific ? 520 : 350) - 32) / 5),
   );
   const keys = [
     'AC',
@@ -143,6 +148,7 @@ export function Calculator({
   ];
   return (
     <ScrollView
+      onLayout={event => setAvailableHeight(event.nativeEvent.layout.height)}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         flexGrow: 1,
