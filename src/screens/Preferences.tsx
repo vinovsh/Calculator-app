@@ -440,7 +440,7 @@ export function Settings() {
         />
       </Card>
       <Label size={12} muted style={{ textAlign: 'center' }}>
-        Everyday Calculator · 1.0.1{'\n'}All tools included. No subscription.
+        Everyday Calculator · 1.0.2{'\n'}All tools included. No subscription.
       </Label>
     </Page>
   );

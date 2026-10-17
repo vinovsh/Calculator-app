@@ -1,7 +1,10 @@
 import Decimal from 'decimal.js';
+import { acceptsCalculatorInput } from './calculatorInput';
 Decimal.set({ precision: 32, rounding: Decimal.ROUND_HALF_UP });
 // Recursive descent parser. No eval, Function constructors or executable input.
 export function evaluate(input: string, degrees = true): string {
+  if (!acceptsCalculatorInput(input, false))
+    throw Error('Check the expression');
   const source = input
     .replace(/×/g, '*')
     .replace(/÷/g, '/')

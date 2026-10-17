@@ -226,3 +226,49 @@ test('compact portrait moves secondary controls into a sheet while keeping equal
   expect(button('Memory M+')).toBeDefined();
   expect(button('Share calculation')).toBeDefined();
 });
+
+test('expression field opens direct editing and Done restores the keypad', async () => {
+  const field = () => app.root.findByType(TextInput);
+  expect(field().props.showSoftInputOnFocus).toBe(true);
+  expect(field().props.autoCorrect).toBe(false);
+  await act(async () => field().props.onFocus());
+  expect(button('Equals')).toBeUndefined();
+  await act(async () => field().props.onChangeText('sqrt(81)+2'));
+  expect(field().props.value).toBe('sqrt(81)+2');
+  await act(async () => button('Done editing expression').props.onPress());
+  expect(button('Equals')).toBeDefined();
+  await act(async () => button('Equals').props.onPress());
+  expect(field().props.value).toBe('11');
+  await act(async () => button('Copy result').props.onPress());
+  expect(platform.copy).toHaveBeenCalledWith('11');
+});
+test('malformed pasted expressions leave accepted text unchanged without errors', async () => {
+  for (const value of ['12..2', '12×÷3', '12++3', '12)', 'sin()', '12abc']) {
+    await act(async () =>
+      app.root.findByType(TextInput).props.onChangeText('12'),
+    );
+    await act(async () =>
+      app.root.findByType(TextInput).props.onChangeText(value),
+    );
+    expect(app.root.findByType(TextInput).props.value).toBe('12');
+    expect(text()).not.toContain('Check input');
+  }
+});
+test('keypad blocks a second decimal and misplaced operator or bracket', async () => {
+  for (const key of ['×', ')', '1', '.', '.', '2', '×', '÷', '3'])
+    await act(async () => button(key).props.onPress());
+  expect(app.root.findByType(TextInput).props.value).toBe('1.2×3');
+});
+test.each(['1÷0', 'sqrt(-1)', 'ln(0)', 'asin(2)', '171!', 'tan(90)', '2+'])(
+  'Equals safely reports invalid result for %s',
+  async value => {
+    await act(async () =>
+      app.root.findByType(TextInput).props.onChangeText(value),
+    );
+    await act(async () => button('Equals').props.onPress());
+    expect(text()).toContain('Check input');
+    expect(
+      (platform.setItem as jest.Mock).mock.calls.some(c => c[0] === 'history'),
+    ).toBe(false);
+  },
+);

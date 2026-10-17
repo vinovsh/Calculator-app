@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   TextInput,
@@ -8,6 +8,7 @@ import {
   Text,
   Vibration,
   Share,
+  Keyboard,
   useWindowDimensions,
 } from 'react-native';
 import Decimal from 'decimal.js';
@@ -25,6 +26,13 @@ export function Calculator({
   onEditDone?: () => void;
 }) {
   const { colors, settings, save, toast } = useApp();
+  const inputRef = useRef<TextInput>(null);
+  const [editing, setEditing] = useState(false);
+  const finishEditing = () => {
+    inputRef.current?.blur();
+    Keyboard.dismiss();
+    setEditing(false);
+  };
   const { height, width } = useWindowDimensions();
   const landscape = width > height;
   const [functionsOpen, setFunctionsOpen] = useState(false);
@@ -228,6 +236,14 @@ export function Calculator({
             }}
           >
             <TextInput
+              ref={inputRef}
+              onFocus={() => setEditing(true)}
+              onBlur={() => setEditing(false)}
+              onSubmitEditing={finishEditing}
+              returnKeyType="done"
+              autoCorrect={false}
+              autoCapitalize="none"
+              spellCheck={false}
               accessibilityLabel="Calculation expression"
               value={expression}
               onChangeText={value => {
@@ -254,7 +270,7 @@ export function Calculator({
                 });
               }}
               selection={selection}
-              showSoftInputOnFocus={false}
+              showSoftInputOnFocus={true}
               multiline={false}
               maxLength={400}
               selectionColor={settings.accent}
@@ -327,7 +343,7 @@ export function Calculator({
             </Text>
           )}
         </View>
-        {!compact && (
+        {!compact && !editing && (
           <View style={{ flexDirection: 'row', gap: 6, height: 44 }}>
             {memoryKeys.map(key => (
               <Pressable
@@ -373,7 +389,7 @@ export function Calculator({
             )}
           </View>
         )}
-        {scientific && !landscape && availableHeight >= 560 && (
+        {scientific && !editing && !landscape && availableHeight >= 560 && (
           <View style={{ flexDirection: 'row', gap: 6, height: 44 }}>
             {['sin(', 'cos(', 'tan('].map(key => (
               <Pressable
@@ -411,81 +427,99 @@ export function Calculator({
           </View>
         )}
       </View>
-      <View
-        testID="calculator-keypad"
-        style={{
-          flex: landscape ? 2.4 : 3.2,
-          minHeight: landscape ? 188 : 284,
-          gap: 4,
-        }}
-      >
-        {rows.map((row, index) => (
-          <View
-            key={index}
-            style={{ flex: 1, flexDirection: 'row', gap: 6, minHeight: 44 }}
-          >
-            {row.map(key => {
-              const equalsKey = key === '=',
-                operator = ['+', '−', '×', '÷'].includes(key);
-              return (
-                <Pressable
-                  key={key}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    key === '⌫'
-                      ? 'Delete'
-                      : key === 'AC'
-                      ? 'Clear all'
-                      : key === '='
-                      ? 'Equals'
-                      : key === '+/−'
-                      ? 'Change sign'
-                      : key
-                  }
-                  onPress={() => pressKey(key)}
-                  onLongPress={key === '⌫' ? clear : undefined}
-                  style={({ pressed }) => ({
-                    flex: !landscape && equalsKey ? 3 : 1,
-                    minWidth: 0,
-                    borderRadius: 16,
-                    borderWidth: equalsKey ? 0 : 1,
-                    borderColor: colors.line,
-                    backgroundColor: equalsKey
-                      ? settings.accent
-                      : operator
-                      ? settings.accent + '16'
-                      : key === 'AC'
-                      ? '#E85D6A16'
-                      : colors.key,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    opacity: pressed ? 0.55 : 1,
-                  })}
-                >
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.7}
-                    style={{
-                      fontSize: landscape ? 23 : 25,
-                      fontWeight: operator || equalsKey ? '700' : '500',
-                      color: equalsKey
-                        ? 'white'
+      {editing && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Done editing expression"
+          onPress={finishEditing}
+          style={{
+            padding: 14,
+            borderRadius: 12,
+            backgroundColor: colors.soft,
+          }}
+        >
+          <Label bold color={settings.accent}>
+            Done editing
+          </Label>
+        </Pressable>
+      )}
+      {!editing && (
+        <View
+          testID="calculator-keypad"
+          style={{
+            flex: landscape ? 2.4 : 3.2,
+            minHeight: landscape ? 188 : 284,
+            gap: 4,
+          }}
+        >
+          {rows.map((row, index) => (
+            <View
+              key={index}
+              style={{ flex: 1, flexDirection: 'row', gap: 6, minHeight: 44 }}
+            >
+              {row.map(key => {
+                const equalsKey = key === '=',
+                  operator = ['+', '−', '×', '÷'].includes(key);
+                return (
+                  <Pressable
+                    key={key}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      key === '⌫'
+                        ? 'Delete'
                         : key === 'AC'
-                        ? '#D54B5A'
-                        : operator
+                        ? 'Clear all'
+                        : key === '='
+                        ? 'Equals'
+                        : key === '+/−'
+                        ? 'Change sign'
+                        : key
+                    }
+                    onPress={() => pressKey(key)}
+                    onLongPress={key === '⌫' ? clear : undefined}
+                    style={({ pressed }) => ({
+                      flex: !landscape && equalsKey ? 3 : 1,
+                      minWidth: 0,
+                      borderRadius: 16,
+                      borderWidth: equalsKey ? 0 : 1,
+                      borderColor: colors.line,
+                      backgroundColor: equalsKey
                         ? settings.accent
-                        : colors.text,
-                    }}
+                        : operator
+                        ? settings.accent + '16'
+                        : key === 'AC'
+                        ? '#E85D6A16'
+                        : colors.key,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      opacity: pressed ? 0.55 : 1,
+                    })}
                   >
-                    {key}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
-      </View>
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                      style={{
+                        fontSize: landscape ? 23 : 25,
+                        fontWeight: operator || equalsKey ? '700' : '500',
+                        color: equalsKey
+                          ? 'white'
+                          : key === 'AC'
+                          ? '#D54B5A'
+                          : operator
+                          ? settings.accent
+                          : colors.text,
+                      }}
+                    >
+                      {key}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      )}
       <Modal
         visible={functionsOpen}
         transparent
