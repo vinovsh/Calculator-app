@@ -19,7 +19,6 @@ import {
   dark,
   Label,
   IconButton,
-  Icon,
 } from './src/components/UI';
 import {
   Settings as SettingsType,
@@ -48,6 +47,7 @@ import {
   Help,
 } from './src/screens/Preferences';
 import { AdBanner } from './src/components/AdBanner';
+import { SideMenu } from './src/components/SideMenu';
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -105,6 +105,7 @@ function Root() {
     [history, setHistory] = useState<HistoryEntry[]>([]),
     [page, setPage] = useState('calculator'),
     [ready, setReady] = useState(false),
+    [menuOpen, setMenuOpen] = useState(false),
     [message, setMessage] = useState(''),
     [reuse, setReuse] = useState(''),
     [session, setSession] = useState(0);
@@ -179,6 +180,8 @@ function Root() {
     );
   };
   const go = (next: string) => {
+    setMenuOpen(false);
+    if (next === page) return;
     nav.current.push(page);
     setReuse('');
     setSession(s => s + 1);
@@ -324,7 +327,12 @@ function Root() {
             borderColor: colors.line,
           }}
         >
-          {!main ? (
+          <IconButton
+            name="Menu"
+            label="Open navigation menu"
+            onPress={() => setMenuOpen(true)}
+          />
+          {!main && (
             <IconButton
               name="ArrowLeft"
               label="Go back"
@@ -333,21 +341,6 @@ function Root() {
                 setSession(s => s + 1);
               }}
             />
-          ) : (
-            <View style={{ padding: 12 }}>
-              <Icon
-                name={
-                  page === 'tools'
-                    ? 'LayoutGrid'
-                    : page === 'history'
-                    ? 'History'
-                    : page === 'settings'
-                    ? 'Settings2'
-                    : 'Calculator'
-                }
-                color={settings.accent}
-              />
-            </View>
           )}
           <Label bold size={20} style={{ flex: 1 }}>
             {title}
@@ -390,7 +383,7 @@ function Root() {
               position: 'absolute',
               left: 24,
               right: 24,
-              bottom: 140,
+              bottom: 80,
               zIndex: 10,
               padding: 16,
               borderRadius: 14,
@@ -408,72 +401,13 @@ function Root() {
             </Text>
           </Pressable>
         )}
-        <View
-          style={{
-            flexDirection: 'row',
-            paddingVertical: 5,
-            borderTopWidth: 1,
-            borderTopColor: colors.line,
-            backgroundColor: colors.card,
-          }}
-        >
-          {[
-            ['calculator', 'Calculator', 'Calculator'],
-            ['tools', 'LayoutGrid', 'All tools'],
-            ['history', 'History', 'History'],
-            ['settings', 'Settings2', 'Settings'],
-          ].map(([id, icon, label]) => {
-            const active =
-              page === id || (id === 'calculator' && page === 'scientific');
-            return (
-              <Pressable
-                key={id}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                onPress={() => {
-                  nav.current = [];
-                  setReuse('');
-                  setSession(s => s + 1);
-                  setPage(id);
-                  if (id === 'calculator')
-                    writeJSON('last', id).catch(() => {});
-                }}
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: 52,
-                  gap: 4,
-                }}
-              >
-                <View
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 3,
-                    borderRadius: 16,
-                    backgroundColor: active
-                      ? settings.accent + '16'
-                      : 'transparent',
-                  }}
-                >
-                  <Icon
-                    name={icon}
-                    size={21}
-                    color={active ? settings.accent : colors.muted}
-                  />
-                </View>
-                <Label
-                  size={10}
-                  bold={active}
-                  color={active ? settings.accent : colors.muted}
-                >
-                  {label}
-                </Label>
-              </Pressable>
-            );
-          })}
-        </View>
         <AdBanner />
+        <SideMenu
+          visible={menuOpen}
+          current={page}
+          close={() => setMenuOpen(false)}
+          select={go}
+        />
       </SafeAreaView>
     </AppContext.Provider>
   );

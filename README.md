@@ -1,9 +1,13 @@
 # Everyday Calculator
 
+Current testing release: **1.0.1**. See [release notes](docs/RELEASE-1.0.1.md).
+
 An Android app built with **React Native CLI + TypeScript**, inspired by the approved six-screen UI storyboard. All tools are included, with no subscriptions or premium locks.
 
 ## Features
 
+- Side-menu navigation and fixed portrait/landscape calculator keypads.
+- Silent rejection of consecutive minus signs.
 - Editable basic and scientific expressions, decimal arithmetic, memory, degree/radian mode, history, copy and share.
 - Currency conversion using Frankfurter v2, actual published rate dates, manual refresh, saved offline rates, searchable currency selection.
 - Twelve unit categories: length, area, volume, weight, temperature, speed, time, pressure, energy, data, power and angle.
